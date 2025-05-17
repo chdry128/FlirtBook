@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Proxy</title>
+    <script>
+        // This is a simple CORS proxy for Flutter web
+        // Make the proxy available as soon as the page loads
+        window.onload = function() {
+            // Signal that the page is ready
+            document.getElementById('ready').textContent = 'true';
+            
+            // Set up the form submission handler
+            const form = document.getElementById('proxy-form');
+            if (form) {
+                form.addEventListener('submit', handleRequest);
+            }
+        };
+        
+        async function handleRequest(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const url = formData.get('url');
+            const method = formData.get('method') || 'GET';
+            const headers = JSON.parse(formData.get('headers') || '{}');
+            const body = formData.get('body');
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: body,
+                });
+                
+                const contentType = response.headers.get('content-type');
+                const responseText = await response.text();
+                
+                document.getElementById('response').textContent = responseText;
+                document.getElementById('content-type').textContent = contentType;
+                document.getElementById('status').textContent = response.status;
+            } catch (error) {
+                document.getElementById('response').textContent = JSON.stringify({ error: error.message });
+                document.getElementById('content-type').textContent = 'application/json';
+                document.getElementById('status').textContent = '500';
+            }
+        }
+    </script>
+</head>
+<body>
+    <form id="proxy-form" style="display: none;">
+        <input type="text" name="url" />
+        <input type="text" name="method" />
+        <input type="text" name="headers" />
+        <textarea name="body"></textarea>
+        <button type="submit">Send</button>
+    </form>
+    
+    <pre id="response"></pre>
+    <div id="content-type" style="display: none;"></div>
+    <div id="status" style="display: none;"></div>
+    <div id="ready" style="display: none;">false</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="flirtbook">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>flirtbook</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- CORS handling script -->
+  <script>
+    // This script helps with CORS issues in development
+    window.addEventListener('flutterInAppWebViewPlatformReady', function(event) {
+      window.flutter_inappwebview.callHandler('corsProxyHandler', function(url, options) {
+        return new Promise(function(resolve, reject) {
+          fetch(url, options)
+            .then(function(response) {
+              return response.text();
+            })
+            .then(function(text) {
+              resolve(text);
+            })
+            .catch(function(error) {
+              reject(error.toString());
+            });
+        });
+      });
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
