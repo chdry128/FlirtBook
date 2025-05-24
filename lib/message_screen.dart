@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'girl-profile.dart';
-import 'open_ai_service_updated.dart';
+import 'girl_profile.dart';
+import 'openai_service.dart';
 
 class MessageScreen extends StatefulWidget {
   final GirlProfile profile;
 
-  const MessageScreen({Key? key, required this.profile}) : super(key: key);
+  const MessageScreen({super.key, required this.profile});
 
   @override
   State<MessageScreen> createState() => _MessageScreenState();
@@ -311,11 +311,14 @@ class _MessageScreenState extends State<MessageScreen> {
                           style: const TextStyle(fontSize: 16, height: 1.5),
                           cursorColor: Color(0xFFFF5988),
                           showCursor: true,
-                          toolbarOptions:
-                          const ToolbarOptions(
-                            copy: true,
-                            selectAll: true,
-                          ),
+                          contextMenuBuilder: (
+                            BuildContext context,
+                            EditableTextState editableTextState,
+                          ) {
+                            return AdaptiveTextSelectionToolbar.editableText(
+                              editableTextState: editableTextState,
+                            );
+                          },
                         ),
               ),
 

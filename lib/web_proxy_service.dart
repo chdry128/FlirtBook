@@ -54,7 +54,7 @@ class WebProxyService {
           print('allorigins.win proxy failed: $e');
 
           // Try another proxy - corsanywhere
-          final proxyUrl = 'https://cors-anywhere.herokuapp.com/${url}';
+          final proxyUrl = 'https://cors-anywhere.herokuapp.com/$url';
           final request = http.Request(method, Uri.parse(proxyUrl));
           request.headers.addAll(headers);
           if (body != null) {
@@ -132,7 +132,7 @@ class WebProxyService {
               // Sixth, try using CORS.sh proxy with API key
               try {
                 print('Trying CORS.sh proxy with API key...');
-                final proxyUrl = 'https://proxy.cors.sh/${url}';
+                final proxyUrl = 'https://proxy.cors.sh/$url';
 
                 // Add the required API key header
                 final proxyHeaders = Map<String, String>.from(headers);

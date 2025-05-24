@@ -5,7 +5,7 @@ import 'shared_preference.dart';
 import 'history_model.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -23,7 +23,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<void> _loadHistory() async {
     final sharedPrefs = SharedPrefs();
     final keys = await sharedPrefs.getAllKeys();
-    final historyKeys = keys.where((key) => key.startsWith('history_')).toList();
+    final historyKeys =
+        keys.where((key) => key.startsWith('history_')).toList();
 
     List<MessageHistory> loadedHistory = [];
     for (String key in historyKeys) {
@@ -47,66 +48,69 @@ class _HistoryScreenState extends State<HistoryScreen> {
         elevation: 0,
       ),
       backgroundColor: const Color(0xFFF8E1F1),
-      body: history.isEmpty
-          ? const Center(
-        child: Text(
-          "No history yet. Generate some messages!",
-          style: TextStyle(fontSize: 18, color: Colors.pink),
-        ),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: history.length,
-        itemBuilder: (_, i) {
-          final h = history[i];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.pink.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+      body:
+          history.isEmpty
+              ? const Center(
+                child: Text(
+                  "No history yet. Generate some messages!",
+                  style: TextStyle(fontSize: 18, color: Colors.pink),
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Profile: ${h.profileName}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
+              )
+              : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: history.length,
+                itemBuilder: (_, i) {
+                  final h = history[i];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.pink.withAlpha(
+                            (0.1 * 255).round(),
+                          ), // Updated for deprecated_member_use
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Message: ${h.message}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF333333),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Profile: ${h.profileName}",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Message: ${h.message}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Generated on: ${h.timestamp}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Generated on: ${h.timestamp}",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
-          );
-        },
-      ),
     );
   }
 }

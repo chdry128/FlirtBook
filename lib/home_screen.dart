@@ -3,13 +3,12 @@ import 'dart:ui';
 import 'add_profile_screen.dart';
 import 'profile_list_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'image.dart';
 import 'history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,7 +20,8 @@ class _HomeScreenState extends State<HomeScreen>
   late Animation<double> _fadeAnimation;
 
   // Adsteera ad link - replace with your actual Adsteera link
-  final String adsteeraUrl = 'https://www.profitableratecpm.com/br1ehbwmk?key=93ae5fa70b5d340b6cccf89af59d9593';
+  final String adsteeraUrl =
+      'https://www.profitableratecpm.com/br1ehbwmk?key=93ae5fa70b5d340b6cccf89af59d9593';
 
   // For tracking if the ad popup is showing
   bool _isAdPopupVisible = false;
@@ -341,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                         SizedBox(height: 16),
-                        Container(
+                        SizedBox(
                           width: screenSize.width * 0.7,
                           child: Text(
                             "Create perfect messages for your special someone",

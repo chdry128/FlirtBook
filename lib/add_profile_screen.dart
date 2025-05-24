@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'girl-profile.dart';
+import 'girl_profile.dart';
 import 'shared_preference.dart';
 import 'custom_button.dart';
 //import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AddProfileScreen extends StatefulWidget {
-  const AddProfileScreen({Key? key}) : super(key: key);
+  const AddProfileScreen({super.key});
 
   @override
   State<AddProfileScreen> createState() => _AddProfileScreenState();
@@ -28,9 +28,9 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     _formKey.currentState!.save();
-    
+
     final sharedPrefs = SharedPrefs();
     final profile = GirlProfile(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -42,7 +42,7 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
     print('Saving profile: ${profile.toJson()}');
     await sharedPrefs.saveProfile('profile_${profile.id}', profile.toJson());
     print('Profile saved with key: profile_${profile.id}');
-    
+
     if (mounted) {
       Navigator.pop(context, true);
     }
@@ -53,10 +53,10 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add Girl"),
-        backgroundColor: Colors.pink,
+        // backgroundColor: Colors.pink, // Removed to use AppBarTheme
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF8E1F1),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme color
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -67,12 +67,12 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  labelStyle: const TextStyle(color: Colors.pink),
+                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary), // Use theme color
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.pink),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary), // Use theme color
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
@@ -92,12 +92,12 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
                 onChanged: (val) => setState(() => status = val!),
                 decoration: InputDecoration(
                   labelText: 'Relationship Status',
-                  labelStyle: const TextStyle(color: Colors.pink),
+                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary), // Use theme color
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.pink),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary), // Use theme color
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
@@ -110,19 +110,19 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
                       controller: interestController,
                       decoration: InputDecoration(
                         labelText: 'Interest',
-                        labelStyle: const TextStyle(color: Colors.pink),
+                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary), // Use theme color
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.pink),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary), // Use theme color
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.pink),
+                    icon: Icon(Icons.add, color: Theme.of(context).colorScheme.primary), // Use theme color
                     onPressed: () {
                       if (interestController.text.isNotEmpty) {
                         setState(() {
@@ -140,10 +140,7 @@ class _AddProfileScreenState extends State<AddProfileScreen> {
                 children: interests.map((i) => Chip(label: Text(i))).toList(),
               ),
               const SizedBox(height: 20),
-              CustomButton(
-                text: "Save Profile",
-                onPressed: saveProfile,
-              ),
+              CustomButton(text: "Save Profile", onPressed: saveProfile),
             ],
           ),
         ),

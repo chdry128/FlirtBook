@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'web_proxy_service.dart';
+// import 'web_proxy_service.dart'; // Removed as calls go through our server proxy
 
 class ImageAnalyzerScreen extends StatefulWidget {
   const ImageAnalyzerScreen({super.key});
@@ -22,7 +20,7 @@ class _ImageAnalyzerScreenState extends State<ImageAnalyzerScreen> {
   File? _selectedImageFile; // For mobile platforms
   Uint8List? _selectedImageBytes; // For web platform
   XFile? _pickedFile; // To store the picked file reference
-  TextEditingController _contextController = TextEditingController();
+  final TextEditingController _contextController = TextEditingController();
 
   // Check if an image is selected on either platform
   bool get hasSelectedImage =>
@@ -198,16 +196,19 @@ class _ImageAnalyzerScreenState extends State<ImageAnalyzerScreen> {
 
   // Function to call the NVIDIA API with the Base64-encoded image and context
   Future<String> callNvidiaApi({
-    required String apiKey,
+    // apiKey parameter removed
     required String imageBase64,
     required String customContext,
-    bool stream = false,
+    bool stream = false, // Keep stream parameter for potential future use, though proxy might not support it yet
   }) async {
-    // Use direct API URL for mobile, and CORS proxy for web
-    final baseUrl =
-        kIsWeb
-            ? 'https://api.allorigins.win/raw?url=${Uri.encodeComponent('https://integrate.api.nvidia.com/v1/chat/completions')}'
-            : 'https://integrate.api.nvidia.com/v1/chat/completions';
+    // All requests now go through our server-side proxy
+    final Uri proxyUri;
+    if (kIsWeb) {
+      proxyUri = Uri.parse('/api/nvidia'); // Relative path for web
+    } else {
+      // TODO: Replace with configurable production URL
+      proxyUri = Uri.parse('http://localhost:3000/api/nvidia'); // For mobile/dev
+    }
 
     // Compose enhanced prompt to instruct AI to analyze the screenshot and generate a flirty message
     String userPrompt =
@@ -215,16 +216,15 @@ class _ImageAnalyzerScreenState extends State<ImageAnalyzerScreen> {
         "${customContext.isNotEmpty ? '\n\nAdditional context about the conversation: $customContext' : ''}"
         '\n\n<img src="data:image/png;base64,$imageBase64" />';
 
-    // Set headers based on stream parameter
+    // Headers for the proxy request - Authorization is handled by the server
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer $apiKey',
       'Accept': stream ? 'text/event-stream' : 'application/json',
     };
 
-    // Prepare the request body according to the API documentation
-    final body = jsonEncode({
-      'model': 'meta/llama-4-scout-17b-16e-instruct',
+    // Prepare the request body for the NVIDIA API (to be sent TO the proxy)
+    final nvidiaApiPayload = {
+      'model': 'meta/llama-4-scout-17b-16e-instruct', // Example model, can be configured
       'messages': [
         {'role': 'user', 'content': userPrompt},
       ],
@@ -232,60 +232,16 @@ class _ImageAnalyzerScreenState extends State<ImageAnalyzerScreen> {
       'temperature': 1.0,
       'top_p': 1.0,
       'stream': stream,
-    });
+    };
 
-    print('Sending request to NVIDIA API...');
-    print('Using URL: $baseUrl');
+    print('Sending request to proxy server: $proxyUri');
 
     try {
-      http.Response response;
-
-      if (kIsWeb) {
-        // For web, try multiple approaches
-        try {
-          // First try: Use our local server proxy
-          final serverProxyUrl = 'http://localhost:3000/api/nvidia';
-          final proxyResponse = await http.post(
-            Uri.parse(serverProxyUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'apiKey': apiKey, 'body': jsonDecode(body)}),
-          );
-
-          if (proxyResponse.statusCode == 200) {
-            response = proxyResponse;
-          } else {
-            throw Exception('Server proxy failed');
-          }
-        } catch (e) {
-          print('Local server proxy failed: $e');
-
-          // Second try: Use CORS proxy service
-          try {
-            response = await WebProxyService.proxyRequest(
-              url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-              method: 'POST',
-              headers: headers,
-              body: body,
-            );
-          } catch (e) {
-            print('CORS proxy service failed: $e');
-
-            // Third try: Use allorigins proxy
-            response = await http.post(
-              Uri.parse(baseUrl),
-              headers: headers,
-              body: body,
-            );
-          }
-        }
-      } else {
-        // For mobile, make the request directly
-        response = await http.post(
-          Uri.parse('https://integrate.api.nvidia.com/v1/chat/completions'),
-          headers: headers,
-          body: body,
-        );
-      }
+      final response = await http.post(
+        proxyUri,
+        headers: headers,
+        body: jsonEncode(nvidiaApiPayload), // This body is sent to your proxy
+      );
 
       if (response.statusCode == 200) {
         print('API request successful');
@@ -396,19 +352,19 @@ class _ImageAnalyzerScreenState extends State<ImageAnalyzerScreen> {
       final imageBase64 = await encodeImageToBase64();
       print('Image encoded to Base64');
 
-      // Step 2: Call the API
-      final apiKey =
-          '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'; // Your API key
+      // Step 2: Call the API (apiKey is no longer passed from client)
 
       // For web, we'll use non-streaming mode as it's more reliable with CORS proxies
-      final useStreaming = !kIsWeb;
+      // The proxy server will decide if it can handle streaming to NVIDIA if stream=true is passed.
+      // For now, let's assume the proxy handles non-streaming responses primarily for this refactor.
+      final useStreaming = !kIsWeb; // This can be simplified or made configurable via proxy if needed
 
-      print('Calling NVIDIA API with streaming mode: $useStreaming');
+      print('Calling proxy for NVIDIA API with streaming mode: $useStreaming');
       final response = await callNvidiaApi(
-        apiKey: apiKey,
+        // apiKey parameter removed
         imageBase64: imageBase64,
         customContext: _contextController.text,
-        stream: useStreaming,
+        stream: useStreaming, // Proxy will receive this; its handling of it is server-side logic
       );
       print('Received response from API');
 

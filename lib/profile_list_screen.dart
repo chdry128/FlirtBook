@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'girl-profile.dart';
+import 'girl_profile.dart';
 import 'message_screen.dart';
 import 'add_profile_screen.dart';
 import 'shared_preference.dart';
 
 class ProfilesListScreen extends StatefulWidget {
-  const ProfilesListScreen({Key? key}) : super(key: key);
+  const ProfilesListScreen({super.key});
 
   @override
   State<ProfilesListScreen> createState() => _ProfilesListScreenState();
@@ -190,6 +190,7 @@ class _ProfilesListScreenState extends State<ProfilesListScreen> {
     await sharedPrefs.deleteProfile(profileKey);
 
     // Show a snackbar to confirm deletion
+    if (!mounted) return; // Check if the widget is still in the tree
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${profile.name} has been deleted'),

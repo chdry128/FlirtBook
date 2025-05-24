@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'girl-profile.dart';
-import 'web_proxy_service.dart';
+import 'girl_profile.dart';
+// import 'web_proxy_service.dart'; // Removed unused import
 
 class NvidiaAIService {
-  static const _apiKey =
-      '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'; // TODO: secure in production
+  // API Key is now handled by the server-side proxy
+  late final http.Client _httpClient;
+
+  NvidiaAIService({http.Client? client}) : _httpClient = client ?? http.Client();
 
   Future<String> generateFlirtyMessage({
     required GirlProfile profile,
@@ -45,17 +47,22 @@ Example output:
 
 """;
 
-    // We'll use the direct API URL for both platforms
-    // The CORS handling will be done in the request logic below
-    final baseUrl = 'https://integrate.api.nvidia.com/v1/chat/completions';
+    // The client now calls our proxy server, which handles the API key and CORS.
+    // Ensure your Flutter app can reach this proxy endpoint.
+    // If running locally: 'http://localhost:3000/api/nvidia'
+    // If deployed, use the appropriate deployed proxy URL.
+    // For simplicity, using a relative path assuming the Flutter web build is served by the same server
+    // or the mobile app is configured to hit the correct backend.
+    // final proxyUrl = kIsWeb ? '/api/nvidia' : 'http://your-backend-server-address/api/nvidia'; // This variable is no longer needed with the simplified logic below
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer $_apiKey',
       'Accept': 'application/json',
+      // Authorization header is removed, server will add it.
     };
 
-    final body = jsonEncode({
+    final bodyPayload = {
+      // This is the body that will be sent to NVIDIA by the proxy
       'model': 'meta/llama-4-scout-17b-16e-instruct',
       'messages': [
         {'role': 'user', 'content': userPrompt},
@@ -64,92 +71,55 @@ Example output:
       'temperature': 1.0,
       'top_p': 1.0,
       'stream': false,
-    });
+    };
 
     try {
       http.Response response;
+      Uri parsedUri;
 
+      // Determine the correct URI based on the platform
       if (kIsWeb) {
-        // For web, use WebProxyService which handles CORS issues
-        try {
-          print('Using WebProxyService for web request...');
-          response = await WebProxyService.proxyRequest(
-            url: baseUrl,
-            method: 'POST',
-            headers: headers,
-            body: body,
-          );
-        } catch (e) {
-          print('WebProxyService failed: $e');
-
-          // Fallback to simulated response for web
-          print('Falling back to simulated response for web');
-
-          // Create a simulated flirty message based on the profile
-          final interests =
-              profile.interests.isNotEmpty
-                  ? profile.interests[0]
-                  : "interesting things";
-          String simulatedResponse;
-
-          if (tone == 'funny') {
-            simulatedResponse = """
-"Hey ${profile.name}, if ${interests} were a crime, you'd be serving a life sentence for being too awesome 😄"
-"Just saw something about ${interests} and thought of you. Coincidence? I think the universe is playing matchmaker 😏"
-"${profile.name}, your passion for ${interests} is almost as attractive as your smile. Almost. 😉"
-            """;
-          } else if (tone == 'romantic') {
-            simulatedResponse = """
-"${profile.name}, thinking about your love for ${interests} makes me wonder what other passions we might share together ❤️"
-"The way your eyes light up when you talk about ${interests}... it's the kind of magic I could get lost in forever"
-"If I could give you anything in the world, it would be the chance to show you how special you are, ${profile.name} 💫"
-            """;
-          } else {
-            simulatedResponse = """
-"Hey ${profile.name}, your interest in ${interests} caught my attention, but your smile is what kept it"
-"${profile.name}, let's talk about ${interests} over coffee sometime. I promise to be at least half as interesting as you are"
-"Just wanted to say that your passion for ${interests} is really cool. It's refreshing to meet someone with genuine interests"
-            """;
-          }
-
-          // Create a mock response that mimics the NVIDIA API response format
-          final mockResponseBody = jsonEncode({
-            'choices': [
-              {
-                'message': {'content': simulatedResponse},
-              },
-            ],
-          });
-
-          response = http.Response(mockResponseBody, 200);
-          return simulatedResponse.trim();
-        }
+        // For web, if served from the same domain as the proxy, a relative path should work.
+        // Otherwise, a full URL (e.g., from environment config) would be needed.
+        // The server.js proxy already handles CORS.
+        parsedUri = Uri.parse('/api/nvidia');
       } else {
-        // For mobile, make the request directly
-        response = await http.post(
-          Uri.parse(baseUrl),
-          headers: headers,
-          body: body,
-        );
+        // For mobile, always use the full URL to your proxy server.
+        // This needs to be configurable for production.
+        // TODO: Replace 'http://localhost:3000' with your actual deployed server address or use an environment variable.
+        parsedUri = Uri.parse('http://localhost:3000/api/nvidia');
       }
+
+      print('Sending request to proxy: $parsedUri');
+
+      response = await _httpClient.post( // Use injected client
+        parsedUri,
+        headers: headers,
+        body: jsonEncode(bodyPayload), // This is the body sent to your proxy
+      );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
+        // Assuming the proxy forwards NVIDIA's response structure directly
         if (jsonResponse.containsKey('choices') &&
             jsonResponse['choices'].isNotEmpty &&
             jsonResponse['choices'][0].containsKey('message') &&
             jsonResponse['choices'][0]['message'].containsKey('content')) {
           return jsonResponse['choices'][0]['message']['content'].trim();
         }
+        print("Could not extract message from AI response: ${response.body}");
         return "Could not extract message from AI response.";
       } else {
+        // Error message from the proxy server
+        print('Error from proxy: ${response.statusCode} ${response.body}');
         throw Exception(
-          'AI request failed: ${response.statusCode} ${response.body}',
+          'Proxy request failed: ${response.statusCode} ${response.body}',
         );
       }
     } catch (e) {
-      print('Error during API request: $e');
-      throw Exception('Failed to connect to NVIDIA API: $e');
+      print('Error during API request to proxy: $e');
+      // Consider more specific error handling or re-throwing a custom exception
+      throw Exception('Failed to connect to the proxy server: $e');
     }
   }
 }
